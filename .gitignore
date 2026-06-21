@@ -1,0 +1,5 @@
+/backend-api/vendor/
+/backend-api/writable/cache/
+/backend-api/writable/logs/
+/backend-api/writable/session/
+.DS_Store

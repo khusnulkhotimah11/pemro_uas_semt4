@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistem Inventaris - PT. LOGISTIK MANDIRI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/vue-router@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased">
+    <div id="app"><router-view></router-view></div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+        const { createRouter, createWebHashHistory } = VueRouter;
+        const API_URL = 'http://localhost:8080';
+
+        // AXIOS INTERCEPTORS
+        axios.interceptors.request.use(config => {
+            const token = localStorage.getItem('token');
+            if (token) config.headers.Authorization = `Bearer ${token}`;
+            return config;
+        });
+
+        // KOMPONEN LOGIN
+        const Login = {
+            template: `
+            <div class="min-h-screen flex items-center justify-center bg-slate-900">
+                <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm">
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl font-black text-slate-800">PT. LOGISTIK MANDIRI</h2>
+                        <p class="text-slate-400 text-sm mt-1">Sistem Manajemen Inventaris</p>
+                    </div>
+                    <form @submit.prevent="handleLogin">
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Username</label>
+                            <input v-model="username" type="text" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-600 outline-none" required>
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Password</label>
+                            <input v-model="password" type="password" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-600 outline-none" required>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-700 text-white font-bold py-3 rounded-lg hover:bg-blue-800 transition shadow-lg">LOGIN SISTEM</button>
+                    </form>
+                </div>
+            </div>
+            `,
+            setup() {
+                const username = ref(''), password = ref('');
+                const router = VueRouter.useRouter();
+                const handleLogin = async () => {
+                    try {
+                        const res = await axios.post(`${API_URL}/auth/login`, { username: username.value, password: password.value });
+                        localStorage.setItem('token', res.data.token);
+                        router.push('/');
+                    } catch { alert('Login Gagal!'); }
+                };
+                return { username, password, handleLogin };
+            }
+        };
+
+        // KOMPONEN DASHBOARD
+        const Dashboard = {
+            template: `
+            <div class="min-h-screen">
+                <nav class="bg-slate-900 text-white p-4 px-8 flex justify-between items-center shadow-lg">
+                    <h1 class="font-bold tracking-wider">PT. LOGISTIK MANDIRI</h1>
+                    <button @click="logout" class="text-xs bg-red-600 px-4 py-2 rounded font-bold hover:bg-red-700">LOGOUT</button>
+                </nav>
+                <main class="p-8 max-w-6xl mx-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-black text-slate-800">Data Stok Barang</h2>
+                        <button @click="openModal()" class="bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-blue-800 transition">+ Tambah Barang</button>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
+                                <tr><th class="p-4">No</th><th class="p-4">Nama Barang</th><th class="p-4">Stok</th><th class="p-4">Harga</th><th class="p-4 text-center">Aksi</th></tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr v-for="(item, index) in barang" :key="index" class="hover:bg-slate-50 transition">
+                                    <td class="p-4">{{ index + 1 }}</td>
+                                    <td class="p-4 font-semibold">{{ item.nama_barang }}</td>
+                                    <td class="p-4 text-slate-600">{{ item.stok }} Unit</td>
+                                    <td class="p-4 text-slate-600">Rp {{ Number(item.harga).toLocaleString() }}</td>
+                                    <td class="p-4 text-center space-x-3">
+                                        <button @click="openModal(item)" class="text-amber-600 font-bold hover:underline">Edit</button>
+                                        <button @click="del(item)" class="text-red-600 font-bold hover:underline">Hapus</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </main>
+
+                <div v-if="showModal" class="fixed inset-0 bg-slate-900 bg-opacity-60 flex items-center justify-center p-4">
+                    <div class="bg-white p-8 rounded-2xl w-full max-w-sm shadow-2xl">
+                        <h3 class="text-lg font-black mb-6">{{ form.id ? 'Edit Barang' : 'Tambah Barang' }}</h3>
+                        <input v-model="form.nama_barang" placeholder="Nama Barang" class="w-full p-3 mb-4 border rounded-lg outline-none focus:ring-2 focus:ring-blue-600">
+                        <input v-model.number="form.stok" type="number" placeholder="Stok" class="w-full p-3 mb-4 border rounded-lg outline-none focus:ring-2 focus:ring-blue-600">
+                        <input v-model.number="form.harga" type="number" placeholder="Harga" class="w-full p-3 mb-6 border rounded-lg outline-none focus:ring-2 focus:ring-blue-600">
+                        <div class="flex gap-3">
+                            <button @click="save" class="flex-1 bg-blue-700 text-white p-3 rounded-lg font-bold">Simpan</button>
+                            <button @click="showModal=false" class="flex-1 bg-slate-200 p-3 rounded-lg font-bold">Batal</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `,
+            setup() {
+                const barang = ref([]), showModal = ref(false), form = ref({ id: null, nama_barang: '', stok: '', harga: '' });
+                const fetchBarang = async () => { const res = await axios.get(`${API_URL}/api/barang`); barang.value = res.data; };
+                const openModal = (item = null) => { form.value = item ? { ...item, id: item.id_barang || item.id } : { id: null, nama_barang: '', stok: '', harga: '' }; showModal.value = true; };
+                const save = async () => { form.value.id ? await axios.put(`${API_URL}/api/barang/${form.value.id}`, form.value) : await axios.post(`${API_URL}/api/barang`, form.value); showModal.value = false; fetchBarang(); };
+                const del = async (item) => { if(confirm('Yakin hapus?')) { await axios.delete(`${API_URL}/api/barang/${item.id_barang || item.id}`); fetchBarang(); } };
+                const logout = () => { localStorage.removeItem('token'); window.location.reload(); };
+                onMounted(fetchBarang);
+                return { barang, showModal, form, openModal, save, del, logout };
+            }
+        };
+
+        const router = createRouter({ history: createWebHashHistory(), routes: [{ path: '/login', component: Login }, { path: '/', component: Dashboard }] });
+        router.beforeEach((to, from, next) => { const token = localStorage.getItem('token'); if (to.path !== '/login' && !token) next('/login'); else next(); });
+        const app = createApp({}); app.use(router); app.mount('#app');
+    </script>
+</body>
+</html>
