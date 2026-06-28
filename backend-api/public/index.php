@@ -62,30 +62,21 @@ if (getcwd() . DIRECTORY_SEPARATOR !== FCPATH) {
 require FCPATH . '../app/Config/Paths.php';
 // ^^^ Change this line if you move your application folder
 
-$paths = new Paths();
-
-if (getenv('VERCEL') || isset($_ENV['VERCEL'])) {
-    if (!defined('ENVIRONMENT')) {
-        $env = $_ENV['CI_ENVIRONMENT'] ?? $_SERVER['CI_ENVIRONMENT'] ?? getenv('CI_ENVIRONMENT') ?: 'production';
-        define('ENVIRONMENT', $env);
+// Trim database and environment variables to prevent accidental spaces/tabs copied from clipboard
+foreach (['CI_ENVIRONMENT', 'database.default.hostname', 'database.default.database', 'database.default.username', 'database.default.password', 'database.default.port'] as $key) {
+    if (isset($_ENV[$key])) {
+        $_ENV[$key] = trim($_ENV[$key]);
     }
-    $bootFile = $paths->appDirectory . '/Config/Boot/' . ENVIRONMENT . '.php';
-    if (!is_file($bootFile)) {
-        header('Content-Type: application/json', true, 500);
-        echo json_encode([
-            'error' => 'Path check failed',
-            'env_evaluated' => ENVIRONMENT,
-            'appDirectory' => $paths->appDirectory,
-            'bootFile' => $bootFile,
-            'is_file' => is_file($bootFile),
-            '__DIR__' => __DIR__,
-            '$_SERVER_CI_ENV' => $_SERVER['CI_ENVIRONMENT'] ?? 'not set',
-            'getenv_CI_ENV' => getenv('CI_ENVIRONMENT'),
-            'HTTP_METHOD' => $_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN'
-        ]);
-        exit;
+    if (isset($_SERVER[$key])) {
+        $_SERVER[$key] = trim($_SERVER[$key]);
+    }
+    $val = getenv($key);
+    if ($val !== false) {
+        putenv("$key=" . trim($val));
     }
 }
+
+$paths = new Paths();
 
 // LOAD THE FRAMEWORK BOOTSTRAP FILE
 require $paths->systemDirectory . '/Boot.php';
