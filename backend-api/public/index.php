@@ -64,6 +64,29 @@ require FCPATH . '../app/Config/Paths.php';
 
 $paths = new Paths();
 
+if (getenv('VERCEL') || isset($_ENV['VERCEL'])) {
+    if (!defined('ENVIRONMENT')) {
+        $env = $_ENV['CI_ENVIRONMENT'] ?? $_SERVER['CI_ENVIRONMENT'] ?? getenv('CI_ENVIRONMENT') ?: 'production';
+        define('ENVIRONMENT', $env);
+    }
+    $bootFile = $paths->appDirectory . '/Config/Boot/' . ENVIRONMENT . '.php';
+    if (!is_file($bootFile)) {
+        header('Content-Type: application/json', true, 500);
+        echo json_encode([
+            'error' => 'Path check failed',
+            'env_evaluated' => ENVIRONMENT,
+            'appDirectory' => $paths->appDirectory,
+            'bootFile' => $bootFile,
+            'is_file' => is_file($bootFile),
+            '__DIR__' => __DIR__,
+            '$_SERVER_CI_ENV' => $_SERVER['CI_ENVIRONMENT'] ?? 'not set',
+            'getenv_CI_ENV' => getenv('CI_ENVIRONMENT'),
+            'HTTP_METHOD' => $_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN'
+        ]);
+        exit;
+    }
+}
+
 // LOAD THE FRAMEWORK BOOTSTRAP FILE
 require $paths->systemDirectory . '/Boot.php';
 
