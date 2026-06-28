@@ -63,7 +63,11 @@ require FCPATH . '../app/Config/Paths.php';
 // ^^^ Change this line if you move your application folder
 
 // Trim database and environment variables to prevent accidental spaces/tabs copied from clipboard
-foreach (['CI_ENVIRONMENT', 'database.default.hostname', 'database.default.database', 'database.default.username', 'database.default.password', 'database.default.port'] as $key) {
+foreach ([
+    'CI_ENVIRONMENT',
+    'database.default.hostname', 'database.default.database', 'database.default.username', 'database.default.password', 'database.default.port',
+    'database_default_hostname', 'database_default_database', 'database_default_username', 'database_default_password', 'database_default_port'
+] as $key) {
     if (isset($_ENV[$key])) {
         $_ENV[$key] = trim($_ENV[$key]);
     }
