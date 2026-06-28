@@ -18,6 +18,13 @@ namespace Config;
  */
 class Paths
 {
+    public function __construct()
+    {
+        if (getenv('VERCEL') || isset($_ENV['VERCEL'])) {
+            $this->writableDirectory = '/tmp';
+        }
+    }
+
     /**
      * ---------------------------------------------------------------
      * SYSTEM FOLDER NAME
