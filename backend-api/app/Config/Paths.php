@@ -22,6 +22,7 @@ class Paths
     {
         if (getenv('VERCEL') || isset($_ENV['VERCEL'])) {
             $this->writableDirectory = '/tmp';
+            $this->systemDirectory = __DIR__ . '/../../../vendor/codeigniter4/framework/system';
         }
     }
 
