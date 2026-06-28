@@ -23,6 +23,13 @@ class Paths
         if (getenv('VERCEL') || isset($_ENV['VERCEL'])) {
             $this->writableDirectory = '/tmp';
             $this->systemDirectory = __DIR__ . '/../../../vendor/codeigniter4/framework/system';
+            
+            // Create subdirectories in /tmp for CodeIgniter to write logs, cache, sessions, etc.
+            foreach (['/tmp/cache', '/tmp/session', '/tmp/logs', '/tmp/debugbar'] as $dir) {
+                if (!is_dir($dir)) {
+                    @mkdir($dir, 0755, true);
+                }
+            }
         }
     }
 
