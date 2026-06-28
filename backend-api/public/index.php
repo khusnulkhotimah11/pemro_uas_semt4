@@ -78,6 +78,13 @@ foreach (['CI_ENVIRONMENT', 'database.default.hostname', 'database.default.datab
 
 $paths = new Paths();
 
+if (getenv('VERCEL') || isset($_ENV['VERCEL'])) {
+    ini_set('display_errors', '1');
+    ini_set('display_startup_errors', '1');
+    error_reporting(E_ALL);
+    define('ENVIRONMENT', 'development');
+}
+
 // LOAD THE FRAMEWORK BOOTSTRAP FILE
 require $paths->systemDirectory . '/Boot.php';
 
