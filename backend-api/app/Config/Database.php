@@ -80,5 +80,9 @@ class Database extends Config
         if (ENVIRONMENT === 'testing') {
             $this->defaultGroup = 'tests';
         }
+
+        if (getenv('VERCEL') || isset($_ENV['VERCEL'])) {
+            $this->default['socket'] = '';
+        }
     }
 }
