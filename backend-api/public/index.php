@@ -80,6 +80,19 @@ foreach ([
     }
 }
 
+if (getenv('VERCEL') || isset($_ENV['VERCEL'])) {
+    $db_host = $_ENV['database_default_hostname'] ?? $_SERVER['database_default_hostname'] ?? getenv('database_default_hostname') ?? 'not set';
+    $db_user = $_ENV['database_default_username'] ?? $_SERVER['database_default_username'] ?? getenv('database_default_username') ?? 'not set';
+    $db_pass = $_ENV['database_default_password'] ?? $_SERVER['database_default_password'] ?? getenv('database_default_password') ?? 'not set';
+    $db_port = $_ENV['database_default_port'] ?? $_SERVER['database_default_port'] ?? getenv('database_default_port') ?? 'not set';
+    $db_name = $_ENV['database_default_database'] ?? $_SERVER['database_default_database'] ?? getenv('database_default_database') ?? 'not set';
+    
+    $pass_len = strlen($db_pass);
+    $pass_masked = $pass_len > 0 ? ($db_pass[0] . '...' . $db_pass[$pass_len - 1]) : 'empty';
+    
+    error_log("DIAGNOSTIC - Host: $db_host | Port: $db_port | User: $db_user | Db: $db_name | PassLength: $pass_len | PassMasked: $pass_masked");
+}
+
 $paths = new Paths();
 
 if (getenv('VERCEL') || isset($_ENV['VERCEL'])) {

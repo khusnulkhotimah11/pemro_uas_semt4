@@ -110,10 +110,41 @@
             `,
             setup() {
                 const barang = ref([]), showModal = ref(false), form = ref({ id: null, nama_barang: '', stok: '', harga: '' });
-                const fetchBarang = async () => { const res = await axios.get(`${API_URL}/api/barang`); barang.value = res.data; };
+                const fetchBarang = async () => {
+                    try {
+                        const res = await axios.get(`${API_URL}/api/barang`);
+                        barang.value = res.data;
+                    } catch (err) {
+                        console.error('Gagal mengambil data:', err);
+                        alert('Gagal memuat data barang! ' + (err.response?.data?.message || err.message || ''));
+                    }
+                };
                 const openModal = (item = null) => { form.value = item ? { ...item, id: item.id_barang || item.id } : { id: null, nama_barang: '', stok: '', harga: '' }; showModal.value = true; };
-                const save = async () => { form.value.id ? await axios.put(`${API_URL}/api/barang/${form.value.id}`, form.value) : await axios.post(`${API_URL}/api/barang`, form.value); showModal.value = false; fetchBarang(); };
-                const del = async (item) => { if(confirm('Yakin hapus?')) { await axios.delete(`${API_URL}/api/barang/${item.id_barang || item.id}`); fetchBarang(); } };
+                const save = async () => {
+                    try {
+                        if (form.value.id) {
+                            await axios.put(`${API_URL}/api/barang/${form.value.id}`, form.value);
+                        } else {
+                            await axios.post(`${API_URL}/api/barang`, form.value);
+                        }
+                        showModal.value = false;
+                        await fetchBarang();
+                    } catch (err) {
+                        console.error('Gagal menyimpan data:', err);
+                        alert('Gagal menyimpan data barang! ' + (err.response?.data?.message || err.message || ''));
+                    }
+                };
+                const del = async (item) => {
+                    if (confirm('Yakin hapus?')) {
+                        try {
+                            await axios.delete(`${API_URL}/api/barang/${item.id_barang || item.id}`);
+                            await fetchBarang();
+                        } catch (err) {
+                            console.error('Gagal menghapus data:', err);
+                            alert('Gagal menghapus data barang! ' + (err.response?.data?.message || err.message || ''));
+                        }
+                    }
+                };
                 const logout = () => { localStorage.removeItem('token'); window.location.reload(); };
                 onMounted(fetchBarang);
                 return { barang, showModal, form, openModal, save, del, logout };
